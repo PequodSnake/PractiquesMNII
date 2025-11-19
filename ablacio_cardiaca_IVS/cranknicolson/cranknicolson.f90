@@ -10,9 +10,9 @@ program calorCN
     real(8), parameter :: Tref = 309.65d0
     real(8), parameter :: deltaT = 43.5d0
     real(8), parameter :: Ttarget = 353.15d0
+    real(8), parameter :: t0 = (L*L*rho*cv)/k
 
     ! escalar adimensional
-    real(8), parameter :: t0 = (L*L*rho*cv)/k
     real(8), parameter :: C = Pext*L*L/(k*deltaT)
 
     ! parametres numerics
@@ -24,24 +24,23 @@ program calorCN
     real(8) :: r, Tmax, t_dim
     integer :: i, step
 
-    ! arrays del metode tridiagonal
-    real(8), dimension(Nx) :: theta, theta_new
+    ! arrays de Crank-Nicolson
+    real(8), dimension(Nx) :: theta, theta_new, theta_prev
     real(8), dimension(Nx) :: aa, bb, cc, dd
 
-    ! inicialitzacio
     r = dt/(2.d0*dx*dx)
 
-    ! condicio inicial: tot zero
+    ! condicio inicial: tot zero (T=36,5C)
     theta = 0.d0
 
-    ! inicialitzar matriu tridiagonal amb identitat
+    ! inicialitzem matriu tridiagonal amb identitat
     do i = 1, Nx
         aa(i) = 0.d0
         bb(i) = 1.d0
         cc(i) = 0.d0
     end do
 
-    ! assignar coeficients Crank-Nicolson als punts interiors
+    ! assignem coeficients Crank-Nicolson
     do i = 2, Nx-1
         aa(i) = -r
         bb(i) = 1.d0 + 2.d0*r
@@ -51,33 +50,41 @@ program calorCN
     ! bucle temporal
     do step = 1, max_steps
 
+        theta_prev = theta
+
         ! condicions de frontera al vector costat dret
         dd(1) = 0.d0
         dd(Nx) = 0.d0
 
-        ! construir vector costat dret segons Crank-Nicolson
+        ! construim vector
         do i = 2, Nx-1
             dd(i) = r*theta(i-1) + (1.d0 - 2.d0*r)*theta(i) + r*theta(i+1) + C*dt
         end do
 
-        ! resoldre sistema tridiagonal amb Thomas
+        ! resolem sistema tridiagonal amb Thomas
         call thomas(aa, bb, cc, dd, theta_new, Nx)
         theta = theta_new
 
-        ! calcular temperatura maxima real
+        ! calculem temperatura maxima
         Tmax = maxval(theta)*deltaT + Tref
 
-        ! sortir si s'ha arribat a la temperatura objectiu
-        if (Tmax >= Ttarget) exit
+        ! sortim si s'ha arribat a la temperatura objectiu
+        if (Tmax >= Ttarget) then
+            theta = theta_prev ! agafem el instant abans de superar Ttarget
+            exit
+        end if
     end do
 
-    ! calcular temps dimensional
-    t_dim = step * dt * t0
+    ! calculem Tmax el instant abans de superar Ttarget
+    Tmax = maxval(theta)*deltaT + Tref
 
-    ! impressio dels resultats
-    print *, "resultats"
+    ! calculem temps dimensional abans de superar Ttarget
+    t_dim = (step-1) * dt * t0
+
+    ! imprimim resultats
     print *, "temps per arribar a 80 graus C:", t_dim, " s"
     print *, "temperatura maxima final:", Tmax, " K"
+    print * , step
     print *, "posicio (m)   temperatura (K)"
 
     do i = 1, Nx
