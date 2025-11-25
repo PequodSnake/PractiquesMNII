@@ -19,7 +19,7 @@ t0 = (L**2 * rho * cv) / k
 C = Pext * L**2 / (k * deltaT)
 
 # parametres numerics
-Nx = 200
+Nx = 101
 dx = L / (Nx - 1)
 dx_star = dx / L
 dt_star = dx_star**2
@@ -97,7 +97,7 @@ ax.set_title("Evolucio de la temperatura")
 frames = []
 
 # guardem un frame cada frame_skip passos
-frame_skip = 5
+frame_skip = 2
 
 # bucle temporal principal
 for step in range(1, max_steps + 1):

@@ -15,7 +15,7 @@ program calorCN
     real(8), parameter :: C = Pext*L*L/(k*deltaT)
 
     ! parametres numerics
-    integer, parameter :: Nx = 200
+    integer, parameter :: Nx = 101
     real(8), parameter :: dx = L/(Nx-1)
     real(8) :: dx_star, dt_star, dt
 
