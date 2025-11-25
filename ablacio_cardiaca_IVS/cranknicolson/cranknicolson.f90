@@ -18,8 +18,8 @@ program calorCN
 
     ! parametres numerics
     integer, parameter :: Nx = 200
-    real(8), parameter :: dx = 1.d0/(Nx-1)
-    real(8), parameter :: dt = 1.d-5
+    real(8), parameter :: dx = L/(Nx-1)
+    real(8) :: dx_star, dt_star, dt
     integer, parameter :: max_steps = 2000000
     integer :: i_sick_start, i_sick_end
 
@@ -31,7 +31,10 @@ program calorCN
     real(8), dimension(Nx) :: theta, theta_new, theta_prev
     real(8), dimension(Nx) :: aa, bb, cc, dd
 
-    r = dt/(2.d0*dx*dx)
+    dx_star = dx / L
+    dt_star = dx_star**2
+    dt = dt_star * t0
+    r = dt_star / (2.d0 * dx_star**2)
 
     theta = 0.d0
 
@@ -62,12 +65,11 @@ program calorCN
         ! definim el vector d
 
         ! 0 en 1 i N per condicions de contorn
-
         dd(1) = 0.d0
         dd(Nx) = 0.d0
 
         do i = 2, Nx-1
-            dd(i) = r*theta(i-1) + (1.d0 - 2.d0*r)*theta(i) + r*theta(i+1) + C*dt
+            dd(i) = r*theta(i-1) + (1.d0 - 2.d0*r)*theta(i) + r*theta(i+1) + C*dt_star
         end do
 
         call thomas(aa, bb, cc, dd, theta_new, Nx)
@@ -94,7 +96,7 @@ program calorCN
         do i = i_sick_start, i_sick_end
             Tloc = theta(i)*deltaT + Tref
             if (Tloc >= Tsafe .and. Tloc <= Ttarget) then
-                t_sick = t_sick + dt*t0
+                t_sick = t_sick + dt
                 exit   
             end if
         end do
@@ -104,7 +106,7 @@ program calorCN
     ! calculem el valor de diverses variables
     ! quan s'acaba la simulacio
     Tmax = maxval(theta)*deltaT + Tref
-    t_dim = (step-1) * dt * t0
+    t_dim = (step-1) * dt
 
     Tmax_sick = maxval(theta(i_sick_start:i_sick_end))*deltaT + Tref
     Tmax_healthy = max( maxval(theta(1:i_sick_start-1)), &
@@ -121,7 +123,6 @@ program calorCN
     do i = 1, Nx
         print *, (i-1)*L/(Nx-1), theta(i)*deltaT + Tref
     end do
-
 
 end program calorCN
 
