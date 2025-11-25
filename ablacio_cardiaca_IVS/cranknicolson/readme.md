@@ -1,4 +1,4 @@
-El programa `tobj` calcula el gradient de temperatura en el teixit per un temps adimensional $t^* = 0.025$.
+El programa `tobj` calcula el gradient de temperatura en el teixit per un temps adimensional $t^* = 0.025$
 
 ---
 
@@ -15,4 +15,4 @@ El gif s'ha generat amb el codi python `grafiquesCN`
 
 ---
 
-Els codis Fortran es poden executar directament amb els executables ja compilats. Però si es volen compilar a partir del codi, s'ha de fer amb algun compilador, com per exemple **[gfortran](https://fortran-lang.org/learn/os_setup/install_gfortran)**
+Els codis Fortran es poden executar directament amb els executables ja compilats. Però si es volen compilar a partir del codi, s'ha de fer amb algun compilador, com per exemple **[gfortran](https://fortran-lang.org/learn/os_setup/install_gfortran)**.
