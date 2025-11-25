@@ -12,21 +12,24 @@ Tref = 309.65
 deltaT = 43.5
 Ttarget = 353.15
 Tsafe = 323.15
+Ttarget_C = Ttarget - 273.15
+Tsafe_C = Tsafe - 273.15
 t0 = (L**2 * rho * cv) / k
 
 C = Pext * L**2 / (k * deltaT)
 
 # parametres numerics
 Nx = 200
-dx = 1.0 / (Nx - 1)
-dt = 1e-5
+dx = L / (Nx - 1)
+dx_star = dx / L
+dt_star = dx_star**2
+dt = dt_star * t0
 max_steps = 2000000
 
-r = dt / (2 * dx**2)
+r = dt_star / (2 * dx_star**2)
 
 theta = np.zeros(Nx)
 theta_prev = np.zeros(Nx)
-
 
 # creem la matriu
 aa = np.zeros(Nx)
@@ -37,6 +40,7 @@ bb[1:Nx-1] = 1 + 2*r
 cc[1:Nx-1] = -r
 
 x_vals = np.linspace(0, L, Nx)
+x_vals_mm = x_vals * 1000
 
 # zona malalta
 i_sick_start = int(round(0.0075 / L * (Nx-1)))
@@ -73,18 +77,19 @@ fig, ax = plt.subplots()
 # linia principal que s'actualitza a cada frame
 line, = ax.plot([], [], lw=2, color='blue')
 
-# linia horitzontal de Ttarget i Tsafe
-target_line = ax.axhline(Ttarget, color='red', linestyle='--', lw=1.5, label='80°C')
-safe_line = ax.axhline(Tsafe, color='green', linestyle='--', lw=1.5, label='50°C')
+# linia horitzontal de Ttarget i Tsafe en °C
+target_line = ax.axhline(Ttarget_C, color='red', linestyle='--', lw=1.5, label='80°C')
+safe_line = ax.axhline(Tsafe_C, color='green', linestyle='--', lw=1.5, label='50°C')
 
-# linies verticals que marquen l'inici i final de la zona malalta
-sick_start_line = ax.axvline(x_vals[i_sick_start], color='orange', linestyle='--', lw=1.5, label='Zona malalta')
-sick_end_line = ax.axvline(x_vals[i_sick_end], color='orange', linestyle='--', lw=1.5)
+# linies verticals que marquen l'inici i final de la zona malalta en mm
+sick_start_line = ax.axvline(x_vals_mm[i_sick_start], color='orange', linestyle='--', lw=1.5, label='Zona malalta')
+sick_end_line = ax.axvline(x_vals_mm[i_sick_end], color='orange', linestyle='--', lw=1.5)
 
-ax.set_xlim(0, L)
-ax.set_ylim(Tref, Ttarget + 10)
-ax.set_xlabel("Posicio (m)")
-ax.set_ylabel("Temperatura (K)")
+
+ax.set_xlim(0, L*1000)
+ax.set_ylim(Tref-273.15, Ttarget_C + 5)
+ax.set_xlabel("Posició (mm)")
+ax.set_ylabel("Temperatura (°C)")
 ax.legend(loc='upper right')
 ax.set_title("Evolucio de la temperatura")
 
@@ -92,7 +97,7 @@ ax.set_title("Evolucio de la temperatura")
 frames = []
 
 # guardem un frame cada frame_skip passos
-frame_skip = 10
+frame_skip = 5
 
 # bucle temporal principal
 for step in range(1, max_steps + 1):
@@ -102,7 +107,7 @@ for step in range(1, max_steps + 1):
 
     # construim el vector dd
     dd = np.zeros(Nx)
-    dd[1:Nx-1] = r*theta[:-2] + (1 - 2*r)*theta[1:-1] + r*theta[2:] + C*dt
+    dd[1:Nx-1] = r*theta[:-2] + (1 - 2*r)*theta[1:-1] + r*theta[2:] + C*dt_star
 
     # resolem el sistema tridiagonal
     theta = thomas(aa, bb, cc, dd)
@@ -125,14 +130,14 @@ for step in range(1, max_steps + 1):
     for i in range(i_sick_start, i_sick_end+1):
         Tloc = theta[i]*deltaT + Tref
         if Tsafe <= Tloc <= Ttarget:
-            t_sick += dt*t0
+            t_sick += dt
             break
 
     # guardem frame per animacio
     if step % frame_skip == 0:
-        frames.append(theta*deltaT + Tref)
+        frames.append(theta*deltaT + Tref - 273.15)
 
-t_dim = (step-1) * dt * t0
+t_dim = (step-1) * dt
 
 # temperatures finals
 Tmax_sick = np.max(theta[i_sick_start:i_sick_end+1])*deltaT + Tref
@@ -147,21 +152,22 @@ print("temperatura maxima zona sana:", Tmax_healthy, "K")
 
 # graf final
 plt.figure()
-plt.plot(x_vals, theta*deltaT + Tref, label="Temperatura final", color='blue')
-plt.axhline(Ttarget, color='red', linestyle='--', lw=1.5, label="80°C")
-plt.axhline(Tsafe, color='green', linestyle='--', lw=1.5, label="50°C")
-plt.axvline(x_vals[i_sick_start], color='orange', linestyle='--', lw=1.5)
-plt.axvline(x_vals[i_sick_end], color='orange', linestyle='--', lw=1.5)
-plt.xlabel("Posicio (m)")
-plt.ylabel("Temperatura (K)")
+plt.plot(x_vals_mm, theta*deltaT + Tref - 273.15, label="Temperatura final", color='blue')
+plt.axhline(Ttarget_C, color='red', linestyle='--', lw=1.5, label="80°C")
+plt.axhline(Tsafe_C, color='green', linestyle='--', lw=1.5, label="50°C")
+plt.axvline(x_vals_mm[i_sick_start], color='orange', linestyle='--', lw=1.5)
+plt.axvline(x_vals_mm[i_sick_end], color='orange', linestyle='--', lw=1.5)
+plt.xlabel("Posició (mm)")
+plt.ylabel("Temperatura (°C)")
 plt.title("Temperatura final")
 plt.legend()
 plt.savefig("temperatura_final.png")
 plt.close()
 
+
 # funcio que actualitza la linia a cada frame de l'animacio
 def update(frame):
-    line.set_data(x_vals, frame)
+    line.set_data(x_vals_mm, frame)
     return line, target_line, safe_line, sick_start_line, sick_end_line
 
 # generem animacio
