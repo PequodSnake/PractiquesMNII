@@ -41,7 +41,7 @@ program euler
   end do
 
   
-  cfl = 0.51_dp             
+  cfl = 0.49_dp             
   dt  = cfl * dz * dz       
 
   t_final = 0.025_dp        
