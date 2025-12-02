@@ -1,4 +1,4 @@
-program calor_explicit
+program calorEE
     implicit none
 
     ! parametres fisics
@@ -93,4 +93,4 @@ program calor_explicit
         print *, (i-1)*L/(Nx-1), theta(i)*deltaT + Tref
     end do
 
-end program calor_explicit
+end program calorEE
