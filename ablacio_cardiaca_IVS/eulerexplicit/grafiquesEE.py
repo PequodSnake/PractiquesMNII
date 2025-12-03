@@ -43,6 +43,7 @@ t_sick = 0.0
 
 # animacio
 fig, ax = plt.subplots()
+ax.tick_params(direction="in", top=True, bottom=True, left=True, right=True)
 # linia principal que s'actualitza a cada frame
 line, = ax.plot([], [], lw=2, color='blue', label="Temperatura")
 
@@ -127,7 +128,7 @@ plt.axvline(x_vals_mm[i_sick_start], color='orange', linestyle='--', lw=1.5, lab
 plt.axvline(x_vals_mm[i_sick_end], color='orange', linestyle='--', lw=1.5)
 plt.xlabel("Posició (mm)")
 plt.ylabel("Temperatura (°C)")
-plt.tick_params(direction="out", top=True, bottom=True, left=True, right=True)
+plt.tick_params(direction="in", top=True, bottom=True, left=True, right=True)
 plt.legend()
 plt.savefig("temperatura_final_EE.png")
 plt.close()
