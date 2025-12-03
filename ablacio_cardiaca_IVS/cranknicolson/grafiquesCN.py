@@ -74,6 +74,7 @@ def thomas(a, b, c, d):
 
 # animacio
 fig, ax = plt.subplots()
+ax.tick_params(direction="in", top=True, bottom=True, left=True, right=True)
 # linia principal que s'actualitza a cada frame
 line, = ax.plot([], [], lw=2, color='blue')
 
@@ -91,7 +92,7 @@ ax.set_ylim(Tref-273.15, Ttarget_C + 5)
 ax.set_xlabel("Posició (mm)")
 ax.set_ylabel("Temperatura (°C)")
 ax.legend(loc='upper right')
-ax.set_title("Evolucio de la temperatura")
+#ax.set_title("Evolucio de la temperatura")
 
 # array on guardem els frames per a l'animacio
 frames = []
@@ -155,13 +156,14 @@ plt.figure()
 plt.plot(x_vals_mm, theta*deltaT + Tref - 273.15, label="Temperatura final", color='blue')
 plt.axhline(Ttarget_C, color='red', linestyle='--', lw=1.5, label="80°C")
 plt.axhline(Tsafe_C, color='green', linestyle='--', lw=1.5, label="50°C")
-plt.axvline(x_vals_mm[i_sick_start], color='orange', linestyle='--', lw=1.5)
+plt.axvline(x_vals_mm[i_sick_start], color='orange', linestyle='--', lw=1.5, label="Zona malalta")
 plt.axvline(x_vals_mm[i_sick_end], color='orange', linestyle='--', lw=1.5)
 plt.xlabel("Posició (mm)")
 plt.ylabel("Temperatura (°C)")
-plt.title("Temperatura final")
+plt.tick_params(direction="in", top=True, bottom=True, left=True, right=True)
+#plt.title("Temperatura final")
 plt.legend()
-plt.savefig("temperatura_final.png")
+plt.savefig("temperatura_final_CN.png")
 plt.close()
 
 
@@ -172,4 +174,4 @@ def update(frame):
 
 # generem animacio
 anim = FuncAnimation(fig, update, frames=frames, blit=True, repeat=False)
-anim.save("evolucio_temperatura.gif", writer='pillow', fps=15)
+anim.save("evolucio_temperatura_CN.gif", writer='pillow', fps=15)
