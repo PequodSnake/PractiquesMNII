@@ -9,7 +9,7 @@ El programa `cranknicolson` calcula el temps durant el qual la zona malalta supe
 
 Aquest programa i l'anterior implementen el mètode de Crank–Nicolson per resoldre l’equació de calor en 1D.
 
-![Evolució de la temperatura](evolucio_temperatura.gif)
+![Evolució de la temperatura](evolucio_temperatura_CN.gif)
 
 El gif s'ha generat amb el codi python `grafiquesCN`
 
