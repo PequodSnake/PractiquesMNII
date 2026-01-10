@@ -77,12 +77,10 @@ for step in range(nsteps_total):
 orbita_theta = np.array(orbita_theta)
 
 def calcular_produccio_horaria(theta_sol):
-    # calcular declinacio solar en funcio de la posicio de la terra a l'orbita
     # el sin() aproxima la variacio sinusoidal de la declinacio
     # - pi/2 ajusta el desfase per que la declinacio sigui zero a l'equinocci de primavera
     declinacio = inc * np.sin(theta_sol - theta_phys - np.pi/2)
 
-    # utilitzant geometria esferica: l'altura maxima depen de la latitud i de la declinacio
     sin_alt_max = np.sin(lat_rad) * np.sin(declinacio) + np.cos(lat_rad) * np.cos(declinacio)
     alt_max = np.arcsin(sin_alt_max)
     
