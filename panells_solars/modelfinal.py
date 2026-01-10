@@ -34,7 +34,7 @@ vr_phys_sb = (mu_sb / h_phys_sb) * e_sb * np.sin(theta_phys_sb)
 omega_phys_sb = h_phys_sb / r_phys_sb**2
 
 # condicions inicials lluna (relatiu a terra)
-# suposem per simplicitat que comenca al perigeu
+# suposem que comenca al perigeu
 theta_phys_tl = 0.0
 h_phys_tl = np.sqrt(mu_tl * a_tl * (1 - e_tl**2))
 r_phys_tl = a_tl * (1 - e_tl**2) / (1 + e_tl * np.cos(theta_phys_tl))
@@ -70,14 +70,11 @@ area_panell = 2.0
 potencia_max = 400.0
 num_panells = 1
 
-# dades climatiques (valles occidental aprox)
-# probabilitat de dia clar (0-1) per mes (gen-des)
+# dades climatiques (valles occidental)
 probs_sol_mes = [0.55, 0.60, 0.65, 0.60, 0.65, 0.75, 0.85, 0.80, 0.70, 0.60, 0.55, 0.50]
-# temperatura maxima mitjana per mes
 temps_max_mes = [13, 14, 16, 18, 22, 26, 29, 29, 25, 21, 16, 13]
-# temperatura minima mitjana per mes
 temps_min_mes = [4, 5, 7, 9, 13, 17, 20, 20, 17, 13, 8, 5]
-# coeficient de perdua per temperatura (0.4% per grau)
+# coeficient de perdua per temperatura
 coef_temp = 0.004 
 
 
@@ -88,14 +85,13 @@ up = np.array([
     np.sin(lat_rad)
 ])
 
-# establim la direccio est que es perpendicular a l eix de rotacio de la terra
+# establim la direccio est que es perpendicular a l'eix de rotacio de la terra
 east = np.array([
     -np.sin(lon_rad),
     np.cos(lon_rad),
     0.0
 ])
 
-# calculem la direccio nord per completar el nostre sistema de referencia local
 north = np.array([
     -np.sin(lat_rad) * np.cos(lon_rad),
     -np.sin(lat_rad) * np.sin(lon_rad),
@@ -107,18 +103,14 @@ def normal_panell(tilt_rad, azimut_rad):
     # tilt_rad: 0 = panell horitzontal; 90 = vertical
     # azimut_rad: 0=n, 90=e, 180=s, 270=o (direccio cap on mira el panell)
     
-    # combinem els vectors nord i est per trobar la direccio horitzontal on mira el panell
     dir_h = np.cos(azimut_rad) * north + np.sin(azimut_rad) * east
-    # sumem la component vertical i l'horitzontal per obtenir el vector final
     n = np.cos(tilt_rad) * up + np.sin(tilt_rad) * dir_h
-    # normalitzem el vector per assegurar-nos que la seva longitud sigui exactament u
     return n / np.linalg.norm(n)
 
-# definim els valors inicials de la instal·lacio abans de l'optimitzacio
+# definim valors inicials
 tilt_deg = 30.0
 azimut_deg = 180.0
 
-# calculem la normal inicial transformant els graus a radiants
 normal = normal_panell(np.radians(tilt_deg), np.radians(azimut_deg))
 
 # RK4
@@ -137,7 +129,6 @@ nsteps_total = nsteps_dia * 730
 
 orbita_theta_terra = [] # theta real de la terra
 
-# ratio de masses pel bariocentre
 mass_ratio = Mlluna / (Mterra + Mlluna)
 
 for step in range(nsteps_total):
@@ -190,7 +181,6 @@ def calcular_produccio_horaria(theta_sol, dia_simulacio, normal_vec, aplicar_cli
     mes = int(dia_any / 30.44) % 12
     
     factor_nuvol = 1.0
-    tipus_dia = "assolellat"
     
     if aplicar_clima:
         # simulacio de nuvols
@@ -202,11 +192,9 @@ def calcular_produccio_horaria(theta_sol, dia_simulacio, normal_vec, aplicar_cli
             if rand_val > prob_sol + (1 - prob_sol) * 0.7:
                 # molt ennuvolat
                 factor_nuvol = random.uniform(0.1, 0.3)
-                tipus_dia = "ennuvolat"
             else:
                 # variable
                 factor_nuvol = random.uniform(0.4, 0.8)
-                tipus_dia = "variable"
     
     # temperatures del dia (amb un petit soroll aleatori)
     t_max = temps_max_mes[mes]
@@ -245,7 +233,6 @@ def calcular_produccio_horaria(theta_sol, dia_simulacio, normal_vec, aplicar_cli
     
     # comprovem que el sol estigui per sobre de l'horitzo (sin_alt > 0)
     # comprovem que el sol quedi per davant de la cara del panell (cos_angle > 0)
-    # aixo evita que el programa sumi energia durant la nit o quan el sol esta a l'esquena
     cond = (cos_angle > 0) & (sin_alt > 0)
     irradiacions = np.zeros_like(cos_angle)
     potencies = np.zeros_like(cos_angle)
@@ -260,17 +247,15 @@ def calcular_produccio_horaria(theta_sol, dia_simulacio, normal_vec, aplicar_cli
         irradiacions[cond] = irradiacio_real
         
         if aplicar_clima:
-            # model de temperatura horaria (aproximacio sinusoidal)
             # suposem pic de calor a les 14h
             hora_pic = 14.0
             t_ambient = t_min + (t_max - t_min) * 0.5 * (1 + np.cos((hores[cond] - hora_pic) * 2 * np.pi / 24))
             
-            # temperatura del panell (puja amb la irradiacio)
+            # temperatura del panell
             t_panel = t_ambient + 0.025 * irradiacio_real
             temperatures_panel[cond] = t_panel
             
             # calcular eficiencia termica
-            # per cada grau sobre 25, perdem eficiencia
             perdua_temp = np.maximum(0, t_panel - 25.0) * coef_temp
             factor_termic = 1.0 - perdua_temp
             factor_termic = np.maximum(0, factor_termic) # no pot ser negatiu
@@ -292,37 +277,28 @@ def calcular_produccio_horaria(theta_sol, dia_simulacio, normal_vec, aplicar_cli
 
 # calculem l'energia total acumulada permetent desactivar el clima
 def energia_anual(tilt_rad, azimut_rad, any_index=0, aplicar_clima=True):
-    # generem el vector normal del panell segons la inclinacio i orientacio
     nvec = normal_panell(tilt_rad, azimut_rad)
-    # definim els indexs d inici i final segons l any que volem simular
     start = 365 * any_index
     end = start + 365
     E = 0.0
     # iterem per cada dia de l'any per sumar la produccio diaria
     for i in range(start, end):
-        # passem l'index i (que es el dia) i el flag de clima a la funcio
         _, _, _, e_dia, _ = calcular_produccio_horaria(orbita_theta_terra[i], i, nvec, aplicar_clima=aplicar_clima)
         E += e_dia
     return E
 
 # definim la funcio que minimitzarem per trobar el maxim d energia
 def funcio_objectiu(x):
-    # forcem aplicar_clima=False perque l'optimitzador treballi amb dia clar
-    # aixo evita que els nuvols aleatoris confonguin l'algoritme
     return -energia_anual(np.radians(x[0]), np.radians(x[1]), any_index=0, aplicar_clima=False)
 
-# busquem els angles ideals utilitzant l algoritme nelder-mead amb limits de seguretat
-# aquest metode funciona creant un triangle de punts que es va movent i deformant
-# cap a la zona de maxima energia en lloc de provar totes les combinacions
-res = minimize(funcio_objectiu, [35.0, 180.0], method='nelder-mead', 
-               bounds=[(0, 90), (0, 360)], tol=1e-2)
+# busquem els angles ideals utilitzant un algorsime en lloc de provar totes les combinacions
+res = minimize(funcio_objectiu, [35.0, 180.0], method='nelder-mead')
 
-# guardem els millors resultats obtinguts de l'optimitzador
 best_t = res.x[0]
 best_a = res.x[1]
 best_E = -res.fun
 
-# assignem els valors finals del tilt i l azimut trobats
+# assignem els valors finals del tilt i l'azimut trobats
 tilt_deg = float(best_t)
 azimut_deg = float(best_a)
 # calculem la normal definitiva del panell amb els angles optims
@@ -337,7 +313,6 @@ dades_diaries = []
 
 # bucle per calcular produccio i altitud per cada dia
 for i in range(n_dies):
-    # passem 'i' per determinar el clima del dia
     hores, pot, irr, energia, altitud = calcular_produccio_horaria(orbita_theta_terra[i], i, normal, aplicar_clima=True)
     produccio_diaria[i] = energia
     altitud_maxima_diaria[i] = altitud
