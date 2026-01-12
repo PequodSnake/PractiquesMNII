@@ -72,8 +72,8 @@ num_panells = 1
 
 # dades climatiques (valles occidental)
 probs_sol_mes = [0.55, 0.60, 0.65, 0.60, 0.65, 0.75, 0.85, 0.80, 0.70, 0.60, 0.55, 0.50]
-temps_max_mes = [13, 14, 16, 18, 22, 26, 29, 29, 25, 21, 16, 13]
-temps_min_mes = [4, 5, 7, 9, 13, 17, 20, 20, 17, 13, 8, 5]
+temps_max_mes = [14.8, 18, 17.6, 20, 23, 27.3, 31.6, 31.9, 25.2, 22.1, 18.2, 14.1]
+temps_min_mes = [3.9, 5.3, 6.6, 7.6, 10.1, 15, 17.9, 19, 13.7, 12.3, 8.5, 2.9]
 # coeficient de perdua per temperatura
 coef_temp = 0.004 
 
