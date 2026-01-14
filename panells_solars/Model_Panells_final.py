@@ -34,7 +34,7 @@ vr_phys_sb = (mu_sb / h_phys_sb) * e_sb * np.sin(theta_phys_sb)
 omega_phys_sb = h_phys_sb / r_phys_sb**2
 
 # condicions inicials lluna (relatiu a terra)
-# suposem que comenca al perigeu
+# suposem que comença al perigeu
 theta_phys_tl = 0.0
 h_phys_tl = np.sqrt(mu_tl * a_tl * (1 - e_tl**2))
 r_phys_tl = a_tl * (1 - e_tl**2) / (1 + e_tl * np.cos(theta_phys_tl))
