@@ -371,7 +371,6 @@ for dia, nom, color in events:
 
 plt.ylabel("Altitud solar màxima (graus)")
 plt.xlabel("Dia (d)")
-#plt.title("Altitud màxima del Sol")
 plt.axvline(365.5, color='black', linestyle='--', linewidth=2, alpha=0.5)
 plt.grid(True, alpha=0.3)
 plt.xlim(1, n_dies)
@@ -385,12 +384,6 @@ plt.figure(figsize=(12, 5))
 plt.plot(dies_plot, produccio_diaria, 'g-', linewidth=1)
 plt.fill_between(dies_plot, produccio_diaria, alpha=0.2, color='green')
 
-events = [
-    (80, 'Equinocci març', 'green'), (172, 'Solstici estiu', 'orange'),
-    (266, 'Equinocci setembre', 'green'), (355, 'Solstici hivern', 'blue'),
-    (445, 'Equinocci març', 'green'), (537, 'Solstici estiu', 'orange'),
-    (631, 'Equinocci setembre', 'green'), (720, 'Solstici hivern', 'blue')
-]
 for dia, nom, color in events:
     label = nom if dia < 366 else None 
     plt.axvline(dia, color=color, linestyle='--', alpha=0.5, linewidth=1, label=label)
@@ -433,7 +426,8 @@ def plot_dia_detall(dia, energia, hores, pot, irr, color_pot, color_irr, tipus):
     
     ax2.set_ylim(0, 1400)
 
-    #plt.title(f"Dia {dia + 1} - {tipus} producció ({energia:.2f} kWh)")
+    # TÍTOL AMB DIA I TIPUS
+    print(f"Dia {dia + 1}: {tipus} producció ({energia:.2f} kWh)")
     
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
@@ -443,5 +437,152 @@ def plot_dia_detall(dia, energia, hores, pot, irr, color_pot, color_irr, tipus):
     plt.savefig(f'potencia_dia_{tipus.lower()}_final.png', dpi=300)
     plt.show()
 
+
 plot_dia_detall(dia_max, energia_max, hores_dia_max, pot_dia_max, irr_dia_max, 'red', 'orange', 'Maxima')
 plot_dia_detall(dia_min, energia_min, hores_dia_min, pot_dia_min, irr_dia_min, 'blue', 'cyan', 'Minima')
+
+# calcular produccio i irradiacio mensual
+def calcular_mensual(produccio_diaria, orbita_theta_terra, normal_vec):
+    mesos = 24  # 2 anys
+    produccio_mensual = np.zeros(mesos)
+    irradiacio_mensual = np.zeros(mesos) # Ara serà en kWh/m2/dia
+    
+    dies_per_mes = 365 // 12
+    dt_h = 1.0 / 6.0 # El mateix pas de temps que fas servir a calcular_produccio_horaria (10 min)
+    
+    for mes in range(mesos):
+        dia_inici = mes * dies_per_mes
+        dia_fi = min((mes + 1) * dies_per_mes, len(produccio_diaria))
+        
+        # produccio mensual (suma total del mes)
+        produccio_mensual[mes] = np.sum(produccio_diaria[dia_inici:dia_fi])
+        
+        # irradiacio: calculem la mitjana d'energia rebuda per dia (kWh/m2)
+        irr_diaria_acumulada_total = 0
+        
+        for dia in range(dia_inici, dia_fi):
+            _, _, irr, _, _ = calcular_produccio_horaria(orbita_theta_terra[dia], dia, normal_vec)
+            
+            if len(irr) > 0:
+                # Integrem la irradiació (W/m2) respecte al temps per obtenir Wh/m2
+                # Després dividim per 1000 per tenir kWh/m2
+                energia_solar_dia = np.sum(irr) * dt_h / 1000.0
+                irr_diaria_acumulada_total += energia_solar_dia
+        
+        # Fem la mitjana diària d'aquell mes
+        if dia_fi > dia_inici:
+            irradiacio_mensual[mes] = irr_diaria_acumulada_total 
+    
+    return produccio_mensual, irradiacio_mensual
+
+produccio_mensual, irradiacio_mensual = calcular_mensual(produccio_diaria, orbita_theta_terra, normal)
+
+# Dades noves proporcionades (12 mesos)
+dades_pvgis = [52.26, 52.68, 64.81, 65.29, 71.04, 70.67, 73.94, 71.23, 61.77, 55.74, 47.49, 49.09]
+# Les repetim per cobrir els 24 mesos de la gràfica
+dades_pvgis_plot = np.tile(dades_pvgis, 2)
+
+# Calculem la diferència (Simulació - PVGIS)
+diferencia = (produccio_mensual - dades_pvgis_plot)
+
+# GRÀFIC COMPARATIU MENSUAL 
+fig, ax1 = plt.subplots(figsize=(14, 6))
+
+mesos_plot = np.arange(1, 25)
+width = 0.35 # Amplada de les barres
+
+ax1.set_xlabel("Mes")
+ax1.set_ylabel("Energia produïda (kWh)", color='black')
+
+# 1. Barres de la simulació (esquerra)
+rects1 = ax1.bar(mesos_plot - width/2, produccio_mensual, width, alpha=0.6, color='green', label='Mensual simulada')
+# 2. Barres de les dades PVGIS (dreta)
+rects2 = ax1.bar(mesos_plot + width/2, dades_pvgis_plot, width, alpha=0.6, color='purple', label='PVGIS')
+
+# 3. Línia de Diferència
+line_diff = ax1.plot(mesos_plot, diferencia, color='blue', linestyle='--', linewidth=2, marker='x', label='Diferència (Sim - PVGIS)')
+# Omplim l'àrea sota la diferència per visualitzar millor la desviació
+ax1.fill_between(mesos_plot, 0, diferencia, color='blue', alpha=0.1)
+# Marquem la línia 0 per referència clara
+ax1.axhline(0, color='black', linewidth=1, linestyle='-', alpha=0.3)
+
+ax1.tick_params(axis='y', labelcolor='black')
+ax1.grid(True, alpha=0.3, axis='y')
+
+# EIX SECUNDARI (Insolació) 
+ax2 = ax1.twinx()
+ax2.set_ylabel("Insolació mensual (kWh/m²)", color='orange')
+line_irr = ax2.plot(mesos_plot, irradiacio_mensual, color='orange', linewidth=2.5, 
+                 marker='o', markersize=6, label='Insolació mensual')
+ax2.tick_params(axis='y', labelcolor='orange')
+
+ax1.axvline(12.5, color='black', linestyle='--', linewidth=2, alpha=0.5)
+
+# LLEGENDA COMBINADA 
+# Hem d'ajuntar els handles de l'eix 1 (barres i línia diff) i l'eix 2 (insolació)
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1 + lines2, labels1 + labels2, loc='lower right', framealpha=0.9)
+
+plt.tight_layout()
+plt.savefig('produccio_comparativa_completa.png', dpi=300)
+plt.show()
+
+
+# CÀLCUL AMB IRRADIACIÓ DONADA
+
+# Dades proporcionades
+irradiacio_input = [4.36, 4.94, 5.6, 5.96, 6.39, 6.71, 6.87, 6.59, 5.79, 4.9, 4.19, 4.1]
+dades_pvgis = [52.26, 52.68, 64.81, 65.29, 71.04, 70.67, 73.94, 71.23, 61.77, 55.74, 47.49, 49.09]
+
+produccio_calculada_model = []
+
+for m in range(12):
+    # Irradiació diària mitjana (kWh/m2)
+    H = irradiacio_input[m]
+    
+    # Estimació temperatura ambient mitjana (promig max/min mes)
+    t_avg = (temps_max_mes[m] + temps_min_mes[m]) / 2.0
+    
+    # Estimació temperatura panell
+    # Suposem una irradiància mitjana durant les hores de sol per calcular l'escalfament
+    # (aprox 12h de mitjana anual per simplificar càlcul tèrmic)
+    g_avg = (H * 1000.0) / 12.0 
+    t_panel = t_avg + 0.025 * g_avg
+    
+    # Factor de pèrdua tèrmica (model)
+    perdua = np.maximum(0, t_panel - 25.0) * coef_temp
+    factor_eff = 1.0 - perdua
+    
+    # Producció ideal diària = H (kWh/m2) * Potència (kW) * Panells
+    # (assumint 1kW/m2 standard test condition)
+    prod_ideal_diaria = H * (potencia_max * num_panells / 1000.0)
+    
+    # Producció real diària amb factor tèrmic
+    prod_real_diaria = prod_ideal_diaria * factor_eff
+    
+    # Producció mensual (dies aprox per mes 30.44)
+    dies_mes = 365.25 / 12.0
+    prod_mensual = prod_real_diaria * dies_mes
+    
+    produccio_calculada_model.append(prod_mensual)
+
+
+# GRÀFIC COMPARATIU amb irradiació del PVGIS
+fig, ax = plt.subplots(figsize=(12, 6))
+
+mesos_idx = np.arange(1, 13)
+width = 0.35
+
+ax.bar(mesos_idx - width/2, produccio_calculada_model, width, label='Model (amb Irradiació PVGIS)', color='teal', alpha=0.7)
+ax.bar(mesos_idx + width/2, dades_pvgis, width, label='PVGIS', color='purple', alpha=0.7)
+
+ax.set_ylabel('Energia Mensual (kWh)')
+ax.set_xlabel('Mes')
+ax.set_xticks(mesos_idx)
+ax.legend()
+ax.grid(True, alpha=0.3, axis='y')
+
+plt.tight_layout()
+plt.savefig('comparativa_irradiacio_donada.png', dpi=300)
+plt.show()
