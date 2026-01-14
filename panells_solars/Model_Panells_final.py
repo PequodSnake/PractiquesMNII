@@ -50,6 +50,7 @@ y_sb = np.array([
     theta_phys_sb
 ])
 
+
 # sistema terra-lluna
 y_tl = np.array([
     r_phys_tl / r0_tl, 
