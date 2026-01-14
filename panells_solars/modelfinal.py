@@ -499,28 +499,29 @@ rects1 = ax1.bar(mesos_plot - width/2, produccio_mensual, width, alpha=0.6, colo
 # 2. Barres de les dades PVGIS (dreta)
 rects2 = ax1.bar(mesos_plot + width/2, dades_pvgis_plot, width, alpha=0.6, color='purple', label='PVGIS')
 
-'''
+
 # 3. Línia de Diferència
 line_diff = ax1.plot(mesos_plot, diferencia, color='blue', linestyle='--', linewidth=2, marker='x', label='Diferència (Sim - PVGIS)')
 # Omplim l'àrea sota la diferència per visualitzar millor la desviació
 ax1.fill_between(mesos_plot, 0, diferencia, color='blue', alpha=0.1)
 # Marquem la línia 0 per referència clara
 ax1.axhline(0, color='black', linewidth=1, linestyle='-', alpha=0.3)
-'''
+
 ax1.tick_params(axis='y', labelcolor='black')
 ax1.grid(True, alpha=0.3, axis='y')
 
-# EIX SECUNDARI (Insolació) 
+# EIX SECUNDARI (irradiació) 
 ax2 = ax1.twinx()
-ax2.set_ylabel("Insolació mensual (kWh/m²)", color='orange')
+ax2.set_ylabel("Irradiació mensual (kWh/m²)", color='orange')
 line_irr = ax2.plot(mesos_plot, irradiacio_mensual, color='orange', linewidth=2.5, 
-                 marker='o', markersize=6, label='Insolació mensual')
+                 marker='o', markersize=6, label='Irradiació mensual')
 ax2.tick_params(axis='y', labelcolor='orange')
+ax2.set_ylim(0,350)
 
 ax1.axvline(12.5, color='black', linestyle='--', linewidth=2, alpha=0.5)
 
 # LLEGENDA COMBINADA 
-# Hem d'ajuntar els handles de l'eix 1 (barres i línia diff) i l'eix 2 (insolació)
+# Hem d'ajuntar els handles de l'eix 1 (barres i línia diff) i l'eix 2 (irradiació)
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
 ax1.legend(lines1 + lines2, labels1 + labels2, loc='lower right', framealpha=0.9)
