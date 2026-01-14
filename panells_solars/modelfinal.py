@@ -499,13 +499,14 @@ rects1 = ax1.bar(mesos_plot - width/2, produccio_mensual, width, alpha=0.6, colo
 # 2. Barres de les dades PVGIS (dreta)
 rects2 = ax1.bar(mesos_plot + width/2, dades_pvgis_plot, width, alpha=0.6, color='purple', label='PVGIS')
 
+'''
 # 3. Línia de Diferència
 line_diff = ax1.plot(mesos_plot, diferencia, color='blue', linestyle='--', linewidth=2, marker='x', label='Diferència (Sim - PVGIS)')
 # Omplim l'àrea sota la diferència per visualitzar millor la desviació
 ax1.fill_between(mesos_plot, 0, diferencia, color='blue', alpha=0.1)
 # Marquem la línia 0 per referència clara
 ax1.axhline(0, color='black', linewidth=1, linestyle='-', alpha=0.3)
-
+'''
 ax1.tick_params(axis='y', labelcolor='black')
 ax1.grid(True, alpha=0.3, axis='y')
 
